@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluxo de Caixa</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+            margin: 0 10px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card:first-child {
+            margin-left: 0;
+        }
+
+        .card:last-child {
+            margin-right: 0;
+        }
+
+        .form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: space-between;
+        }
+
+        .form input[type="text"],
+        .form input[type="number"] {
+            flex: 2;
+            padding: 8px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .form select {
+            flex: 1;
+            padding: 8px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        td {
+            text-align: center;
+        }
+
+        .icon {
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        .icon.up {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            background-color: rgba(138, 195, 74, 0.85);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 5px;
+        }
+
+        .icon.up::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 8px solid white;
+            top: 6px;
+        }
+
+        .icon.down {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            background-color: rgba(255, 0, 0, 0.75); 
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 5px;
+        }
+
+        .icon.down::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 8px solid white; 
+            top: 6px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="summary">
+            <div class="card">Entradas: R$ <span id="entradas">0.00</span></div>
+            <div class="card">Saídas: R$ <span id="saidas">0.00</span></div>
+            <div class="card">Total: R$ <span id="total">0.00</span></div>
+        </div>
+
+        <div class="form">
+            <input type="text" id="descricao" placeholder="Descrição">
+            <input type="number" id="valor" placeholder="Registro de Valor">
+            <select id="tipo">
+                <option value="Entrada">Entrada</option>
+                <option value="Saída">Saída</option>
+            </select>
+            <button onclick="adicionarRegistro()">Incluir</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                    <th>Tipo</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaRegistros">
+               
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+        let entradas = 0.00;
+        let saidas = 0.00;
+        let total = 0.00;
+        let registros = []; 
+
+        function atualizarResumo() {
+            document.getElementById('entradas').innerText = entradas.toFixed(2);
+            document.getElementById('saidas').innerText = saidas.toFixed(2);
+            document.getElementById('total').innerText = total.toFixed(2);
+        }
+
+        function adicionarRegistro() {
+            const descricao = document.getElementById('descricao').value;
+            const valor = parseFloat(document.getElementById('valor').value);
+            const tipo = document.getElementById('tipo').value;
+
+            if (!descricao || isNaN(valor)) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            registros.push({ descricao, valor, tipo });
+
+            const tabela = document.getElementById('tabelaRegistros');
+            const novaLinha = document.createElement('tr');
+
+            const colunaDescricao = document.createElement('td');
+            colunaDescricao.textContent = descricao;
+            novaLinha.appendChild(colunaDescricao);
+
+            const colunaValor = document.createElement('td');
+            colunaValor.textContent = `R$ ${valor.toFixed(2)}`;
+            novaLinha.appendChild(colunaValor);
+
+            const colunaTipo = document.createElement('td');
+            const icon = document.createElement('span');
+            icon.classList.add('icon');
+            icon.classList.add(tipo === 'Entrada' ? 'up' : 'down');
+            icon.textContent = tipo === 'Entrada' ? '' : '';
+            colunaTipo.appendChild(icon);
+            novaLinha.appendChild(colunaTipo);
+
+            const colunaAcoes = document.createElement('td');
+            const btnExcluir = document.createElement('span');
+            btnExcluir.classList.add('icon');
+            btnExcluir.textContent = '🗑️';
+            btnExcluir.onclick = function () {
+                removerRegistro(novaLinha, valor, tipo);
+            };
+            colunaAcoes.appendChild(btnExcluir);
+            novaLinha.appendChild(colunaAcoes);
+
+            tabela.appendChild(novaLinha);
+
+            if (tipo === 'Entrada') {
+                entradas += valor;
+            } else {
+                saidas += valor;
+            }
+            total = entradas - saidas;
+
+            atualizarResumo();
+            document.getElementById('descricao').value = '';
+            document.getElementById('valor').value = '';
+        }
+
+        function removerRegistro(linha, valor, tipo) {
+            if (tipo === 'Entrada') {
+                entradas -= valor;
+            } else {
+                saidas -= valor;
+            }
+            total = entradas - saidas;
+
+       
+            registros = registros.filter(item => item.descricao !== linha.cells[0].textContent || item.valor !== valor || item.tipo !== tipo);
+
+            linha.remove();
+            atualizarResumo();
+        }
+
+  
+        function filtrarRegistros(tipo) {
+            return registros.filter(item => item.tipo === tipo);
+        }
+
+        atualizarResumo();
+    </script>
+</body>
+</html>
+
+
